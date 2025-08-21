@@ -1,0 +1,204 @@
+// app/play/form/page.tsx
+"use client";
+import { useMemo, useState, useEffect } from "react";
+
+type ServerOk =
+  | {
+      ok: true;
+      data: { name: string; email: string; file: null | { name: string; size: number; type: string } };
+      message: string;
+    }
+  | { ok: false; errors: { field?: string; message: string }[] };
+
+export default function FormPlay() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [avatar, setAvatar] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const [clientErrors, setClientErrors] = useState<{ name?: string; email?: string; avatar?: string }>({});
+  const [serverResult, setServerResult] = useState<ServerOk | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const isValidEmail = (val: string) => /\S+@\S+\.\S+/.test(val);
+
+  const canSubmit = useMemo(() => {
+    return name.trim().length >= 2 && isValidEmail(email);
+  }, [name, email]);
+
+  useEffect(() => {
+    if (!avatar) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(avatar);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [avatar]);
+
+  function validateClient() {
+    const errs: { name?: string; email?: string; avatar?: string } = {};
+    if (name.trim().length < 2) errs.name = "At least 2 characters.";
+    if (!email.trim()) errs.email = "Email is required.";
+    else if (!isValidEmail(email)) errs.email = "Invalid email format.";
+
+    if (avatar) {
+      const maxSize = 2 * 1024 * 1024;
+      if (!avatar.type.startsWith("image/")) errs.avatar = "Only image files allowed.";
+      if (avatar.size > maxSize) errs.avatar = "Max file size is 2MB.";
+    }
+
+    setClientErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setServerResult(null);
+    if (!validateClient()) return;
+
+    setLoading(true);
+    try {
+      const fd = new FormData(e.currentTarget);
+      const res = await fetch("/api/form", { method: "POST", body: fd });
+      const json = (await res.json()) as ServerOk;
+      setServerResult(json);
+    } catch (err: any) {
+      setServerResult({ ok: false, errors: [{ message: err?.message || "Network error" }] });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  {/*
+  async function submitManually() {
+    setServerResult(null);
+    if (!validateClient()) return;
+
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("name", name);
+      fd.append("email", email);
+      if (avatar) fd.append("avatar", avatar);
+
+      const res = await fetch("/api/form", { method: "POST", body: fd });
+      const json = (await res.json()) as ServerOk;
+      setServerResult(json);
+    } catch (err: any) {
+      setServerResult({ ok: false, errors: [{ message: err?.message || "Network error" }] });
+    } finally {
+      setLoading(false);
+    }
+  }
+*/}
+
+  const inputClass = (key: "name" | "email" | "avatar") =>
+    `w-full rounded-xl border px-4 py-2 shadow-md 
+     focus:outline-none focus:ring-2 focus:ring-indigo-400 
+     ${clientErrors[key] ? "border-red-400 ring-red-200" : "border-gray-300 bg-white"}`;
+
+  return (
+    <main className="max-w-lg mx-auto p-8 space-y-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-2xl">
+      <h1 className="text-2xl font-bold text-gray-800 text-center">Form with File Upload</h1>
+
+      <form onSubmit={onSubmit} className="space-y-4" encType="multipart/form-data">
+        {/* Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <input
+            name="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Jane Doe"
+            className={inputClass("name")}
+          />
+          {clientErrors.name && <p className="text-xs text-red-500 mt-1">{clientErrors.name}</p>}
+        </div>
+
+        {/* Email */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input
+            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="jane@example.com"
+            className={inputClass("email")}
+          />
+          {clientErrors.email && <p className="text-xs text-red-500 mt-1">{clientErrors.email}</p>}
+        </div>
+
+        {/* File Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Avatar (image ≤ 2MB)</label>
+          <input
+            name="avatar"
+            type="file"
+            accept="image/*"
+            onChange={(e) => setAvatar(e.currentTarget.files?.[0] ?? null)}
+            className={inputClass("avatar")}
+          />
+          {clientErrors.avatar && <p className="text-xs text-red-500 mt-1">{clientErrors.avatar}</p>}
+
+          {avatar && (
+            <div className="mt-3 p-3 rounded-xl border shadow-inner bg-white">
+              <p className="text-xs text-gray-600">
+                Selected: {avatar.name} ({Math.round(avatar.size / 1024)} KB)
+              </p>
+              <img src={previewUrl} alt="Preview" className="mt-2 max-h-40 rounded-lg shadow-md" />
+            </div>
+          )}
+        </div>
+
+        {/* Buttons */}
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="submit"
+            disabled={!canSubmit || loading}
+            className="flex-1 rounded-xl bg-indigo-500 text-white font-medium px-4 py-2 shadow-md 
+                       hover:bg-indigo-600 transition disabled:opacity-50"
+          >
+            {loading ? "Submitting…" : "Submit via Form"}
+          </button>
+          {/*
+          <button
+            type="button"
+            onClick={submitManually}
+            disabled={!canSubmit || loading}
+            className="flex-1 rounded-xl bg-gray-200 text-gray-700 font-medium px-4 py-2 shadow-md 
+                       hover:bg-gray-300 transition disabled:opacity-50"
+          >
+            {loading ? "Submitting…" : "Submit Programmatically"}
+          </button> */}
+        </div>
+      </form>
+
+      {/* Server result */}
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold text-gray-800">Server result</h2>
+        {!serverResult && <p className="text-sm text-gray-500">No submission yet.</p>}
+
+        {serverResult?.ok === true && (
+          <div className="rounded-xl border border-green-300 p-4 bg-green-50 shadow-inner">
+            <p className="font-medium text-green-800 mb-1">✅ Success</p>
+            <pre className="text-sm">{JSON.stringify(serverResult, null, 2)}</pre>
+          </div>
+        )}
+
+        {serverResult?.ok === false && (
+          <div className="rounded-xl border border-red-300 p-4 bg-red-50 shadow-inner">
+            <p className="font-medium text-red-800 mb-1">❌ Server validation errors</p>
+            <ul className="list-disc ml-5 text-sm text-red-700">
+              {serverResult.errors.map((e, i) => (
+                <li key={i}>
+                  {e.field ? <strong>{e.field}:</strong> : null} {e.message}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
