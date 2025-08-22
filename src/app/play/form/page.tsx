@@ -88,7 +88,7 @@ export default function FormPlay() {
           <input
             name="name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
             placeholder="Jane Doe"
             className={inputClass("name")}
           />
@@ -101,7 +101,7 @@ export default function FormPlay() {
           <input
             name="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="jane@example.com"
             className={inputClass("email")}
           />
@@ -115,7 +115,7 @@ export default function FormPlay() {
             name="avatar"
             type="file"
             accept="image/*"
-            onChange={(e) => setAvatar(e.currentTarget.files?.[0] ?? null)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAvatar(e.currentTarget.files?.[0] ?? null)}
             className={inputClass("avatar")}
           />
           {clientErrors.avatar && <p className="text-xs text-red-500 mt-1">{clientErrors.avatar}</p>}
