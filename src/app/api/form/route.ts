@@ -1,3 +1,5 @@
+import { getSupabaseAdmin } from "../../../../lib/supabaseServer";
+
 type ApiError = {field?:string; message:string};
 
 function validateEmail(email:string){
@@ -23,19 +25,39 @@ export async function POST(request:Request){
         errors.push({field:"email", message:"Email format looks invalid"})
     }
 
-    if (file !== null){
-        if (!(file instanceof File)){
-            errors.push({ field: "avatar", message: "Invalid file payload" });
-        } else {
-            const maxSize = 2 * 1024 * 1024;
-            if (!file.type.startsWith("image/")){
-                errors.push({ field: "avatar", message: "Only image files are allowed" });
-            }
-            if (file.size > maxSize){
-                errors.push({ field: "avatar", message: "Max file size is 2MB" })
-            }
+    const supabase = getSupabaseAdmin();
+    let avatarPath: string | null = null;
+    let avatarUrl: string | null = null;
+    
+    if (file && file instanceof File){
+        const ext = (file.name.split(".").pop() || "bin").toLowerCase();
+        const fileName = `${crypto.randomUUID()}.${ext}`
+        const path = `avatars/${fileName}`
+
+        const {error: uploadErr, data: uploaded} = await supabase
+            .storage
+            .from('avatars')
+            .upload(path, file, {
+                contentType: file.type || 'application/octet-stream',
+                upsert: false
+            });
+
+        if (uploadErr){
+            return Response.json(
+                { ok: false, errors: [{ field: 'avatar', message: uploadErr.message }] },
+                { status: 400 }
+            );
         }
+        
+
+        avatarPath = uploaded?.path ?? path;
+
+        const { data: pub } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(avatarPath);
+        avatarUrl = pub.publicUrl || null;
     }
+    
 
     if (errors.length){
         return Response.json({ ok: false, errors }, { status: 400 });
@@ -44,10 +66,28 @@ export async function POST(request:Request){
     const fileMeta = file && file instanceof File
         ?  { name: file.name, size: file.size, type: file.type }
         :   null;
+    
+    const {data: row, error: dbErr} = await supabase
+        .from('submissions')
+        .insert({
+            name,
+            email,
+            avatar_path: avatarPath,
+            avatar_url: avatarUrl,
+        })
+        .select()
+        .single()
 
-    return Response.json({
-        ok: true,
-        data: { name, email, file: fileMeta },
-        message: `Thanks, ${name}! We'll contact you at ${email}.`,
-    });
+        if (dbErr) {
+            return Response.json(
+                { ok: false, errors: [{ message: dbErr.message }] },
+                { status: 500 }
+            );
+        };
+
+        return Response.json({
+            ok: true,
+            data: row,
+            message: `Thanks, ${name}! We'll contact you at ${email}.`,
+        });
 }

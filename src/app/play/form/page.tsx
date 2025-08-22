@@ -1,6 +1,7 @@
 // app/play/form/page.tsx
 "use client";
 import { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 type ServerOk =
   | {
@@ -19,6 +20,7 @@ export default function FormPlay() {
   const [clientErrors, setClientErrors] = useState<{ name?: string; email?: string; avatar?: string }>({});
   const [serverResult, setServerResult] = useState<ServerOk | null>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const isValidEmail = (val: string) => /\S+@\S+\.\S+/.test(val);
 
@@ -63,6 +65,9 @@ export default function FormPlay() {
       const res = await fetch("/api/form", { method: "POST", body: fd });
       const json = (await res.json()) as ServerOk;
       setServerResult(json);
+      if (json.ok) {
+        router.push("/success");
+      }
     } catch (err: any) {
       setServerResult({ ok: false, errors: [{ message: err?.message || "Network error" }] });
     } finally {
@@ -141,7 +146,7 @@ export default function FormPlay() {
           />
           {clientErrors.avatar && <p className="text-xs text-red-500 mt-1">{clientErrors.avatar}</p>}
 
-          {avatar && (
+          {avatar && previewUrl && (
             <div className="mt-3 p-3 rounded-xl border shadow-inner bg-white">
               <p className="text-xs text-gray-600">
                 Selected: {avatar.name} ({Math.round(avatar.size / 1024)} KB)
@@ -155,7 +160,7 @@ export default function FormPlay() {
         <div className="flex items-center justify-between gap-3">
           <button
             type="submit"
-            disabled={!canSubmit || loading}
+            //disabled={!canSubmit || loading}
             className="flex-1 rounded-xl bg-indigo-500 text-white font-medium px-4 py-2 shadow-md 
                        hover:bg-indigo-600 transition disabled:opacity-50"
           >
@@ -174,7 +179,7 @@ export default function FormPlay() {
         </div>
       </form>
 
-      {/* Server result */}
+      {/* Server result 
       <section className="space-y-2">
         <h2 className="text-lg font-semibold text-gray-800">Server result</h2>
         {!serverResult && <p className="text-sm text-gray-500">No submission yet.</p>}
@@ -199,6 +204,7 @@ export default function FormPlay() {
           </div>
         )}
       </section>
+      */}
     </main>
   );
 }
