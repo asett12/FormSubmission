@@ -19,7 +19,6 @@ export default function FormPlay() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [clientErrors, setClientErrors] = useState<{ name?: string; email?: string; avatar?: string }>({});
-  const [_serverResult, setServerResult] = useState<ServerOk | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -53,7 +52,6 @@ export default function FormPlay() {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setServerResult(null);
     if (!validateClient()) return;
 
     setLoading(true);
@@ -61,12 +59,14 @@ export default function FormPlay() {
       const fd = new FormData(e.currentTarget);
       const res = await fetch("/api/form", { method: "POST", body: fd });
       const json = (await res.json()) as ServerOk;
-      setServerResult(json);
       if (json.ok) {
         router.push("/success");
+      } else {
+        setClientErrors({ email: json.errors[0]?.message }); // example: handle error inline
       }
-    } catch (err: any) {
-      setServerResult({ ok: false, errors: [{ message: err?.message || "Network error" }] });
+    } catch (err: unknown) {
+      console.error(err);
+      setClientErrors({ email: "Network error" });
     } finally {
       setLoading(false);
     }
@@ -125,7 +125,13 @@ export default function FormPlay() {
               <p className="text-xs text-gray-600">
                 Selected: {avatar.name} ({Math.round(avatar.size / 1024)} KB)
               </p>
-              <Image src={previewUrl} alt="Preview" className="mt-2 max-h-40 rounded-lg shadow-md" />
+              <Image
+                src={previewUrl}
+                alt="Preview"
+                width={160}
+                height={160}
+                className="mt-2 max-h-40 rounded-lg shadow-md"
+              />
             </div>
           )}
         </div>
@@ -134,7 +140,6 @@ export default function FormPlay() {
         <div className="flex items-center justify-between gap-3">
           <button
             type="submit"
-            //disabled={!canSubmit || loading}
             className="flex-1 rounded-xl bg-indigo-500 text-white font-medium px-4 py-2 shadow-md 
                        hover:bg-indigo-600 transition disabled:opacity-50"
           >
