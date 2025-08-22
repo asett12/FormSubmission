@@ -45,6 +45,8 @@ export default async function AdminPage() {
                   <td className="px-4 py-3">
                     {row.avatar_url ? (
                       <Image
+                        width={40}
+                        height={40}
                         src={row.avatar_url}
                         alt="avatar"
                         className="h-10 w-10 rounded-lg object-cover border"
