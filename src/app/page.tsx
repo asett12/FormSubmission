@@ -6,7 +6,7 @@ export default function HomePage() {
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       <div className="max-w-2xl w-full grid gap-6 sm:grid-cols-2">
         <Link
-          href="/play/form" // change to "/form" if you move the page
+          href="/play/form"
           className="group rounded-2xl bg-white p-6 shadow-lg ring-1 ring-gray-100 hover:shadow-xl transition"
         >
           <div className="text-2xl">🙋‍♀️ User</div>

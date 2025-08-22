@@ -87,3 +87,7 @@ export async function POST(request:Request){
             message: `Thanks, ${name}! We'll contact you at ${email}.`,
         });
 }
+
+export async function DELETE(request:Request){
+    
+}

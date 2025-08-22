@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 type ServerOk =
   | {
@@ -137,15 +138,23 @@ export default function FormPlay() {
         </div>
 
         {/* Buttons */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
           <button
             type="submit"
             className="flex-1 rounded-xl bg-indigo-500 text-white font-medium px-4 py-2 shadow-md 
-                       hover:bg-indigo-600 transition disabled:opacity-50"
+                      hover:bg-indigo-600 transition disabled:opacity-50"
           >
             {loading ? "Submitting…" : "Submit via Form"}
           </button>
-        </div>
+
+          <Link
+            href="/"
+            className="rounded-xl bg-slate-700 px-4 py-2 text-white shadow hover:bg-slate-800"
+          >
+            Back to Home
+          </Link>
+      </div>
+
       </form>
     </main>
   );
