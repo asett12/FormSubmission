@@ -2,6 +2,7 @@
 "use client";
 import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 type ServerOk =
   | {
@@ -151,7 +152,7 @@ export default function FormPlay() {
               <p className="text-xs text-gray-600">
                 Selected: {avatar.name} ({Math.round(avatar.size / 1024)} KB)
               </p>
-              <img src={previewUrl} alt="Preview" className="mt-2 max-h-40 rounded-lg shadow-md" />
+              <Image src={previewUrl} alt="Preview" className="mt-2 max-h-40 rounded-lg shadow-md" />
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
 // app/admin/page.tsx
+import Link from "next/link";
 import { getSupabaseAdmin } from "../../../lib/supabaseServer";
 import Image from "next/image";
 
@@ -43,7 +44,7 @@ export default async function AdminPage() {
                 <tr key={row.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     {row.avatar_url ? (
-                      <img
+                      <Image
                         src={row.avatar_url}
                         alt="avatar"
                         className="h-10 w-10 rounded-lg object-cover border"
@@ -74,12 +75,12 @@ export default async function AdminPage() {
         </div>
 
         <div className="mt-6">
-          <a
+          <Link
             href="/"
             className="inline-block rounded-lg bg-slate-700 px-4 py-2 text-white shadow hover:bg-slate-800"
           >
             Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     </main>
