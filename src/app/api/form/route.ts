@@ -28,7 +28,7 @@ export async function POST(request:Request){
     const supabase = getSupabaseAdmin();
     let avatarPath: string | null = null;
     let avatarUrl: string | null = null;
-    
+
     if (file && file instanceof File){
         const ext = (file.name.split(".").pop() || "bin").toLowerCase();
         const fileName = `${crypto.randomUUID()}.${ext}`
@@ -62,10 +62,6 @@ export async function POST(request:Request){
     if (errors.length){
         return Response.json({ ok: false, errors }, { status: 400 });
     }
-
-    const fileMeta = file && file instanceof File
-        ?  { name: file.name, size: file.size, type: file.type }
-        :   null;
     
     const {data: row, error: dbErr} = await supabase
         .from('submissions')
