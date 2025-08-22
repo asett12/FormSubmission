@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function SuccessPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-green-50">
@@ -6,12 +8,12 @@ export default function SuccessPage() {
         <p className="mt-3 text-gray-600">
           Thanks for your submission. We’ll get back to you soon.
         </p>
-        <a
+        <Link
           href="/"
           className="mt-6 inline-block rounded-lg bg-green-600 px-4 py-2 font-medium text-white shadow hover:bg-green-700"
         >
           Go back home
-        </a>
+        </Link>
       </div>
     </main>
   );
