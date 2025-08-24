@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+FormSubmission
 
-## Getting Started
+A simple Next.js app with Supabase backend for collecting user submissions. Users can enter their name, email, and optional avatar, and all submissions appear in an Admin dashboard. If no avatar is uploaded, a default image is shown so the UI always looks complete.
 
-First, run the development server:
+🔗 Live Demo: form-submission-asett.vercel.app
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+✨ Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Clean form with validation (name, email, optional avatar)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Avatars stored in Supabase Storage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Default fallback avatar when no image is uploaded
 
-## Learn More
+Admin page (/admin) listing latest submissions
 
-To learn more about Next.js, take a look at the following resources:
+Responsive table built with Tailwind CSS
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Deployed seamlessly on Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+🛠️ Built With
 
-## Deploy on Vercel
+Next.js 14
+ – App Router + TypeScript
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Supabase
+ – Database + Storage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Tailwind CSS
+ – Styling
+
+Vercel
+ – Deployment
+
+🚀 Quick Preview
+Home page: form to submit your details
+Admin page: table showing name, email, avatar, and submission date
+
+📸 Screenshots
+<img width="1440" height="732" alt="Screenshot 2568-08-24 at 11 29 00" src="https://github.com/user-attachments/assets/3ee2d897-c469-416a-95b8-dcda85a7c6bc" />
+<img width="1440" height="732" alt="Screenshot 2568-08-24 at 11 28 45" src="https://github.com/user-attachments/assets/a801ffba-a560-4b3a-85a6-71e2db079909" />
+<img width="1440" height="732" alt="Screenshot 2568-08-24 at 11 28 40" src="https://github.com/user-attachments/assets/560a7532-b036-4f5b-9f0e-2658beaf5469" />
