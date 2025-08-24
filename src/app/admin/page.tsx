@@ -47,7 +47,11 @@ export default async function AdminPage() {
                       <Image
                         width={40}
                         height={40}
-                        src={row.avatar_url}
+                        src={
+                          typeof row.avatar_url === "string" && row.avatar_url.trim()
+                            ? row.avatar_url
+                            : "/admin/profile.png"
+                        }
                         alt="avatar"
                         className="h-10 w-10 rounded-lg object-cover border"
                       />
