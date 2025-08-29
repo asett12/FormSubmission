@@ -1,4 +1,3 @@
-// app/admin/page.tsx
 import Link from "next/link";
 import { getSupabaseAdmin } from "../../../lib/supabaseServer";
 import Image from "next/image";
