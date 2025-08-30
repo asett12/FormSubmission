@@ -1,5 +1,5 @@
-// app/api/submissions/route.ts (adjust path if needed)
-import { getSupabaseAdmin } from "../../../../lib/supabaseServer";
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server"; // server client using @supabase/ssr + cookies
 
 type ApiError = { field?: string; message: string };
 
@@ -9,54 +9,51 @@ function validateEmail(email: string) {
 
 function toPublicUrl(key: string): string {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/+$/, "");
-  return base
-    ? `${base}/storage/v1/object/public/${key.replace(/^\/+/, "")}`
-    : "";
+  return base ? `${base}/storage/v1/object/public/${key.replace(/^\/+/, "")}` : "";
 }
 
 export async function POST(request: Request) {
-  const fd = await request.formData();
+  const supabase = await createClient();
 
+  // 1) Get the authenticated user (session comes from cookies)
+  const {
+    data: { user },
+    error: userErr,
+  } = await supabase.auth.getUser();
+
+  if (userErr || !user) {
+    return NextResponse.json({ ok: false, errors: [{ message: "Unauthorized" }] }, { status: 401 });
+  }
+
+  // 2) Parse form data
+  const fd = await request.formData();
   const name = (fd.get("name") as string | null)?.trim() ?? "";
   const email = (fd.get("email") as string | null)?.trim() ?? "";
   const file = fd.get("avatar") as File | null;
 
+  // 3) Validate
   const errors: ApiError[] = [];
+  if (!name) errors.push({ field: "name", message: "Name is required" });
+  else if (name.length < 2) errors.push({ field: "name", message: "Name must have at least 2 characters" });
 
-  if (!name) {
-    errors.push({ field: "name", message: "Name is required" });
-  } else if (name.length < 2) {
-    errors.push({ field: "name", message: "Name must have at least 2 characters" });
-  }
-
-  if (!email) {
-    errors.push({ field: "email", message: "Email is required" });
-  } else if (!validateEmail(email)) {
-    errors.push({ field: "email", message: "Email format looks invalid" });
-  }
+  if (!email) errors.push({ field: "email", message: "Email is required" });
+  else if (!validateEmail(email)) errors.push({ field: "email", message: "Email format looks invalid" });
 
   const hasFile = !!file && file instanceof File && file.size > 0;
-  if (hasFile) {
-    if (!file.type || !file.type.startsWith("image/")) {
-      errors.push({ field: "avatar", message: "Only image files are allowed." });
-    }
+  if (hasFile && (!file!.type || !file!.type.startsWith("image/"))) {
+    errors.push({ field: "avatar", message: "Only image files are allowed." });
   }
 
-  if (errors.length) {
-    return Response.json({ ok: false, errors }, { status: 400 });
-  }
+  if (errors.length) return NextResponse.json({ ok: false, errors }, { status: 400 });
 
-  const supabase = getSupabaseAdmin();
-  const FALLBACK_URL = "/admin/profile.png"; 
+  // 4) Upload (bucket should allow uploads for authenticated users, or be public)
+  const FALLBACK_URL = "/admin/profile.png";
+  let avatar_path: string | null = null;
+  let avatar_url: string = FALLBACK_URL;
 
-  let avatar_path: string | null = null; 
-  let avatar_url: string = FALLBACK_URL; 
-
-  // Handle upload if a valid image file was provided 
   if (hasFile && file!.type.startsWith("image/")) {
-    // Derive a real extension (avoid .bin)
     const origExt = (file!.name.split(".").pop() || "").toLowerCase();
-    const mimeExt = (file!.type.split("/").pop() || "").toLowerCase(); 
+    const mimeExt = (file!.type.split("/").pop() || "").toLowerCase();
     const ext = origExt || mimeExt || "png";
 
     const filename = `${crypto.randomUUID()}.${ext}`;
@@ -65,51 +62,49 @@ export async function POST(request: Request) {
     const { error: uploadErr, data: uploaded } = await supabase.storage
       .from("avatars")
       .upload(key, file!, {
-        contentType: file!.type, 
+        contentType: file!.type,
         upsert: false,
       });
 
     if (uploadErr) {
-      return Response.json(
-        {
-          ok: false,
-          errors: [{ field: "avatar", message: `Upload failed: ${uploadErr.message}` }],
-        },
+      return NextResponse.json(
+        { ok: false, errors: [{ field: "avatar", message: `Upload failed: ${uploadErr.message}` }] },
         { status: 400 },
       );
     }
 
     avatar_path = uploaded?.path ?? key;
 
+    // If the bucket is public, this returns a public URL
     const { data: pub } = supabase.storage.from("avatars").getPublicUrl(avatar_path);
     avatar_url = pub.publicUrl || toPublicUrl(avatar_path) || FALLBACK_URL;
   }
 
+  // 5) Insert row with user_id filled server-side (Option B)
   const { data: row, error: dbErr } = await supabase
     .from("submissions")
     .insert({
+      user_id: user.id, // 🔒 filled on the server
       name,
       email,
-      avatar_path, 
-      avatar_url, 
+      avatar_path,
+      avatar_url,
     })
     .select()
     .single();
 
   if (dbErr) {
-    return Response.json(
-      { ok: false, errors: [{ message: dbErr.message }] },
-      { status: 500 },
-    );
+    // With RLS enabled, failures often include policy errors—return them for debugging
+    return NextResponse.json({ ok: false, errors: [{ message: dbErr.message }] }, { status: 400 });
   }
 
-  return Response.json({
+  return NextResponse.json({
     ok: true,
     data: row,
     message: `Thanks, ${name}! We'll contact you at ${email}.`,
   });
 }
 
-export async function DELETE(_request: Request) {
-  return Response.json({ ok: false, message: "Not implemented" }, { status: 405 });
+export async function DELETE() {
+  return NextResponse.json({ ok: false, message: "Not implemented" }, { status: 405 });
 }
